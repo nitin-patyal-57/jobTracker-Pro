@@ -4,6 +4,7 @@ import { api } from "../api/client.js";
 import ApplicationCard from "../components/ApplicationCard.jsx";
 import KanbanBoard from "../components/KanbanBoard.jsx";
 import Filters from "../components/Filters.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const defaultFilters = {
   search: "",
@@ -14,16 +15,14 @@ const defaultFilters = {
 };
 
 const Dashboard = () => {
+  const { user, updateUser } = useAuth();
   const [filters, setFilters] = useState(defaultFilters);
   const [searchParams] = useSearchParams();
   const [applications, setApplications] = useState([]);
   const [meta, setMeta] = useState({ page: 1, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem("dailyFocus");
-    return saved ? JSON.parse(saved) : ["", "", ""];
-  });
+  const [tasks, setTasks] = useState(["", "", ""]);
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -49,11 +48,22 @@ const Dashboard = () => {
 
   useEffect(() => {
     const querySearch = searchParams.get("search") || "";
-    if (querySearch && querySearch !== filters.search) {
+    if (querySearch !== filters.search) {
       setFilters((prev) => ({ ...prev, search: querySearch }));
     }
-    loadApplications();
   }, [searchParams]);
+
+  useEffect(() => {
+    loadApplications();
+  }, [filters]);
+
+  useEffect(() => {
+    if (user?.dailyFocus?.length) {
+      const next = [...user.dailyFocus];
+      while (next.length < 3) next.push("");
+      setTasks(next.slice(0, 3));
+    }
+  }, [user]);
 
   const summary = useMemo(() => {
     return applications.reduce(
@@ -106,7 +116,15 @@ const Dashboard = () => {
 
   const saveTasks = (next) => {
     setTasks(next);
-    localStorage.setItem("dailyFocus", JSON.stringify(next));
+  };
+
+  const persistTasks = async () => {
+    try {
+      const updated = await api.updateMe({ dailyFocus: tasks });
+      updateUser(updated);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const updateTask = (index, value) => {
@@ -216,6 +234,9 @@ const Dashboard = () => {
               />
             ))}
           </div>
+          <button type="button" className="secondary" onClick={persistTasks}>
+            Save focus
+          </button>
         </div>
         <div className="card insight-card">
           <h3>Weekly trend</h3>

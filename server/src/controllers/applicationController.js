@@ -28,11 +28,34 @@ const buildFilters = (req) => {
   return filters;
 };
 
+const allowedStatuses = ["Applied", "Interview", "Offer", "Rejected"];
+
+const isValidDate = (value) => {
+  if (!value) return true;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
+};
+
+const validatePayload = (payload) => {
+  if (payload.status && !allowedStatuses.includes(payload.status)) {
+    return "Invalid status value";
+  }
+  if (!isValidDate(payload.appliedDate)) return "Invalid applied date";
+  if (!isValidDate(payload.nextInterviewDate)) return "Invalid next interview date";
+  if (!isValidDate(payload.followUpDate)) return "Invalid follow-up date";
+  return null;
+};
+
 export const createApplication = async (req, res) => {
   try {
     const { company, role } = req.body;
     if (!company || !role) {
       return res.status(400).json({ message: "Company and role are required" });
+    }
+
+    const validationError = validatePayload(req.body);
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
     }
 
     const application = await Application.create({
@@ -88,6 +111,11 @@ export const updateApplication = async (req, res) => {
   try {
     const updates = { ...req.body };
     delete updates.user;
+
+    const validationError = validatePayload(updates);
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
 
     const application = await Application.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },

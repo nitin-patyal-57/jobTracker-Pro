@@ -1,20 +1,48 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { api } from "../api/client.js";
 
 const AccountSettings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [form, setForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    weeklyDigest: true,
-    interviewReminders: true
+    workModeDefault: user?.preferences?.workModeDefault || "",
+    targetSalary: user?.preferences?.targetSalary || "",
+    weeklyDigest: user?.preferences?.notifications?.weeklyDigest ?? true,
+    interviewReminders: user?.preferences?.notifications?.interviewReminders ?? true,
+    applicationReminders: user?.preferences?.notifications?.applicationReminders ?? true,
+    publicProfile: user?.preferences?.privacy?.publicProfile ?? false,
+    monthlyExport: user?.preferences?.privacy?.monthlyExport ?? false
   });
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage("Settings saved locally (API hookup coming next). ");
+    try {
+      const updated = await api.updateMe({
+        name: form.name,
+        email: form.email,
+        preferences: {
+          workModeDefault: form.workModeDefault,
+          targetSalary: form.targetSalary,
+          notifications: {
+            weeklyDigest: form.weeklyDigest,
+            interviewReminders: form.interviewReminders,
+            applicationReminders: form.applicationReminders
+          },
+          privacy: {
+            publicProfile: form.publicProfile,
+            monthlyExport: form.monthlyExport
+          }
+        }
+      });
+      updateUser(updated);
+      setMessage("Settings saved.");
+    } catch (err) {
+      setMessage(err.message || "Failed to save settings.");
+    }
   };
 
   return (
@@ -48,13 +76,21 @@ const AccountSettings = () => {
           <h3>Work preferences</h3>
           <p className="muted">Set defaults for new applications.</p>
           <div className="grid-two">
-            <select>
-              <option>Preferred work mode</option>
-              <option>Remote</option>
-              <option>Hybrid</option>
-              <option>Onsite</option>
+            <select
+              value={form.workModeDefault}
+              onChange={(event) => setForm({ ...form, workModeDefault: event.target.value })}
+            >
+              <option value="">Preferred work mode</option>
+              <option value="Remote">Remote</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="Onsite">Onsite</option>
             </select>
-            <input type="text" placeholder="Target salary range (e.g. $80k - $120k)" />
+            <input
+              type="text"
+              placeholder="Target salary range (e.g. $80k - $120k)"
+              value={form.targetSalary}
+              onChange={(event) => setForm({ ...form, targetSalary: event.target.value })}
+            />
           </div>
 
           <h3>Notifications</h3>
@@ -87,7 +123,11 @@ const AccountSettings = () => {
                 <div className="notice-title">Application reminders</div>
                 <div className="muted">Alerts when you haven’t updated a role in 7 days.</div>
               </div>
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                checked={form.applicationReminders}
+                onChange={(event) => setForm({ ...form, applicationReminders: event.target.checked })}
+              />
             </label>
           </div>
 
@@ -99,14 +139,22 @@ const AccountSettings = () => {
                 <div className="notice-title">Show public profile</div>
                 <div className="muted">Make your profile visible to shared links.</div>
               </div>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={form.publicProfile}
+                onChange={(event) => setForm({ ...form, publicProfile: event.target.checked })}
+              />
             </label>
             <label className="notice-card">
               <div>
                 <div className="notice-title">Export data monthly</div>
                 <div className="muted">Email a CSV of your pipeline every month.</div>
               </div>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={form.monthlyExport}
+                onChange={(event) => setForm({ ...form, monthlyExport: event.target.checked })}
+              />
             </label>
           </div>
 

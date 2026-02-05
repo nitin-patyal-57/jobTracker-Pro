@@ -4,24 +4,28 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [headline, setHeadline] = useState("Open to full‑stack roles");
   const [editingHeadline, setEditingHeadline] = useState(false);
   const [draftHeadline, setDraftHeadline] = useState(headline);
 
   useEffect(() => {
-    const saved = localStorage.getItem("profileHeadline");
-    if (saved) {
-      setHeadline(saved);
-      setDraftHeadline(saved);
+    if (user?.headline) {
+      setHeadline(user.headline);
+      setDraftHeadline(user.headline);
     }
-  }, []);
+  }, [user]);
 
-  const saveHeadline = () => {
+  const saveHeadline = async () => {
     const next = draftHeadline.trim() || "Open to full‑stack roles";
-    setHeadline(next);
-    localStorage.setItem("profileHeadline", next);
-    setEditingHeadline(false);
+    try {
+      const updated = await api.updateMe({ headline: next });
+      updateUser(updated);
+      setHeadline(next);
+      setEditingHeadline(false);
+    } catch (err) {
+      setEditingHeadline(false);
+    }
   };
 
   const [resumeFile, setResumeFile] = useState(null);
@@ -40,6 +44,7 @@ const Profile = () => {
     try {
       const data = await api.uploadResume(resumeFile);
       setResumeUrl(data.resumeUrl);
+      if (data.user) updateUser(data.user);
       setResumeStatus("Resume uploaded");
       setResumeFile(null);
     } catch (err) {

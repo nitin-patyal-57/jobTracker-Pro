@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 const getToken = () => localStorage.getItem("token");
 
@@ -46,5 +46,6 @@ export const api = {
     const data = new FormData();
     data.append("resume", file);
     return request("/uploads/resume", { method: "POST", body: data });
-  }
+  },
+  updateMe: (payload) => request("/users/me", { method: "PATCH", body: JSON.stringify(payload) })
 };

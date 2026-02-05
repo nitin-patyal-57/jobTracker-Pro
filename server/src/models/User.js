@@ -7,6 +7,21 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
     resumeUrl: { type: String },
+    headline: { type: String, trim: true },
+    dailyFocus: [{ type: String, trim: true }],
+    preferences: {
+      workModeDefault: { type: String, trim: true },
+      targetSalary: { type: String, trim: true },
+      notifications: {
+        weeklyDigest: { type: Boolean, default: true },
+        interviewReminders: { type: Boolean, default: true },
+        applicationReminders: { type: Boolean, default: true }
+      },
+      privacy: {
+        publicProfile: { type: Boolean, default: false },
+        monthlyExport: { type: Boolean, default: false }
+      }
+    },
     resetTokenHash: { type: String },
     resetTokenExpires: { type: Date }
   },
