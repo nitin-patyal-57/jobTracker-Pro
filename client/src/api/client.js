@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "https://jobtracker-pro-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 const getToken = () => localStorage.getItem("token");
 

@@ -27,7 +27,17 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-router.post("/resume", requireAuth, upload.single("resume"), async (req, res) => {
+const handleUpload = (req, res, next) => {
+  upload.single("resume")(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File must be 5MB or smaller" });
+    }
+    return res.status(400).json({ message: err.message || "Upload failed" });
+  });
+};
+
+router.post("/resume", requireAuth, handleUpload, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });

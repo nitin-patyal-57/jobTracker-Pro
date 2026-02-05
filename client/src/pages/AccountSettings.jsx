@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
@@ -6,15 +6,15 @@ import { api } from "../api/client.js";
 const AccountSettings = () => {
   const { user, updateUser } = useAuth();
   const [form, setForm] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    workModeDefault: user?.preferences?.workModeDefault || "",
-    targetSalary: user?.preferences?.targetSalary || "",
-    weeklyDigest: user?.preferences?.notifications?.weeklyDigest ?? true,
-    interviewReminders: user?.preferences?.notifications?.interviewReminders ?? true,
-    applicationReminders: user?.preferences?.notifications?.applicationReminders ?? true,
-    publicProfile: user?.preferences?.privacy?.publicProfile ?? false,
-    monthlyExport: user?.preferences?.privacy?.monthlyExport ?? false
+    name: "",
+    email: "",
+    workModeDefault: "",
+    targetSalary: "",
+    weeklyDigest: true,
+    interviewReminders: true,
+    applicationReminders: true,
+    publicProfile: false,
+    monthlyExport: false
   });
   const [message, setMessage] = useState("");
 
@@ -205,3 +205,17 @@ const AccountSettings = () => {
 };
 
 export default AccountSettings;
+  useEffect(() => {
+    if (!user) return;
+    setForm({
+      name: user.name || "",
+      email: user.email || "",
+      workModeDefault: user.preferences?.workModeDefault || "",
+      targetSalary: user.preferences?.targetSalary || "",
+      weeklyDigest: user.preferences?.notifications?.weeklyDigest ?? true,
+      interviewReminders: user.preferences?.notifications?.interviewReminders ?? true,
+      applicationReminders: user.preferences?.notifications?.applicationReminders ?? true,
+      publicProfile: user.preferences?.privacy?.publicProfile ?? false,
+      monthlyExport: user.preferences?.privacy?.monthlyExport ?? false
+    });
+  }, [user]);

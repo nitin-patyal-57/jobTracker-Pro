@@ -7,16 +7,19 @@ const parsePagination = (req) => {
   return { page, limit, skip };
 };
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const buildFilters = (req) => {
   const filters = { user: req.user.id };
   const { status, company, search, from, to } = req.query;
 
   if (status) filters.status = status;
-  if (company) filters.company = new RegExp(company, "i");
+  if (company) filters.company = new RegExp(escapeRegex(company), "i");
   if (search) {
+    const safe = escapeRegex(search);
     filters.$or = [
-      { company: new RegExp(search, "i") },
-      { role: new RegExp(search, "i") }
+      { company: new RegExp(safe, "i") },
+      { role: new RegExp(safe, "i") }
     ];
   }
   if (from || to) {

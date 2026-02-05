@@ -14,9 +14,20 @@ const PORT = process.env.PORT || 4000;
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,
+  process.env.APP_URL,
+  "http://localhost:5173"
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "*",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (process.env.NODE_ENV !== "production") return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: false
   })
 );
